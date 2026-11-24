@@ -87,7 +87,7 @@ crm/evo-service-crm/       template para negócios de serviço
 docs/                      materiais
 skills/site-trackeado/     skill do Claude Code para o site
 ```
-O [template de serviços](crm/evo-service-crm/README.md) cria dois pipelines, etiquetas, campos, macros, opt-out e configuração do funil de tráfego. Os dois nichos usam as mesmas imagens e stacks.
+O [template de serviços](crm/evo-service-crm/README.md) cria três pipelines (Comercial, Pós-venda e recompra, e Prospecção com opt-in pela API oficial do WhatsApp), etiquetas, campos, macros, opt-out e configuração do funil de tráfego. Os dois nichos usam as mesmas imagens e stacks.
 
 ## Licença
 MIT, igual ao SetupOrion. Mantenha os créditos à OrionDesign e ao Sistema Britto.

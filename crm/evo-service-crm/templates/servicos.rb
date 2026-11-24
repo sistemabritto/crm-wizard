@@ -27,6 +27,16 @@ PIPELINES = [
     ['Acompanhamento', '#3B82F6', :active, 'Acompanhar resultados e satisfação'],
     ['Pedido de indicação', '#8B5CF6', :active, 'Solicitar indicação'],
     ['Recompra', '#F59E0B', :active, 'Identificar nova oportunidade']
+  ] },
+  # Prospecção ativa: só pela API oficial do WhatsApp e só para lista com opt-in.
+  { name: 'Prospecção', description: 'Prospecção ativa pela API oficial do WhatsApp, só para lista com opt-in.', stages: [
+    ['Lista com opt-in', '#94A3B8', :active, 'Contato que autorizou receber mensagens'],
+    ['Primeiro contato enviado', '#3B82F6', :active, 'Primeira mensagem enviada pela API oficial do WhatsApp'],
+    ['Respondeu', '#8B5CF6', :active, 'Contato respondeu à primeira mensagem'],
+    ['Qualificado', '#F59E0B', :active, 'Necessidade e interesse identificados'],
+    ['Passou para o comercial', '#10B981', :completed, 'Encaminhado ao pipeline Comercial'],
+    ['Sem interesse', '#9CA3AF', :cancelled, 'Contato sem interesse no momento'],
+    ['Não contatar', '#DC2626', :cancelled, 'Pediu para não receber mensagens: não contatar mais']
   ] }
 ].freeze
 
@@ -37,6 +47,8 @@ LABELS = [
   ['equipe', 'Contato interno', '#0EA5E9'],
   ['fora-do-escopo', 'Serviço fora do escopo', '#6B7280'],
   ['opt-out', 'Pediu para não receber mensagens', '#DC2626'],
+  ['prospeccao', 'Contato em prospecção ativa', '#0891B2'],
+  ['opt-in', 'Autorizou receber mensagens', '#16A34A'],
   ['prioridade-humano', 'Precisa de atendimento humano', '#B91C1C'],
   ['origem-meta', 'Anúncio do Meta', '#1877F2'],
   ['origem-google', 'Anúncio do Google', '#34A853'],
