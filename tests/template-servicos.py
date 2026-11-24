@@ -29,6 +29,13 @@ class TemplateServicosTest(unittest.TestCase):
         for t in ('prospeccao', 'opt-in', 'opt-out'):
             self.assertIn(t, titulos)
 
+    def test_busca_de_etapa_e_sempre_por_pipeline(self):
+        # 'Qualificado' existe em Comercial e em Prospecção: a criação e o tracking precisam filtrar pelo pipeline.
+        self.assertIn("pipeline.pipeline_stages.exists?(name: name)", SOURCE)
+        self.assertIn("Pipeline.find_by(name: pipe)&.pipeline_stages&.find_by(name: name)&.id", SOURCE)
+        self.assertNotIn("PipelineStage.find_by(name", SOURCE)
+        self.assertNotIn("PipelineStage.exists?(name", SOURCE)
+
     def test_prospeccao_nao_altera_tracking(self):
         self.assertIn("stage.call('Comercial', 'Qualificado')", SOURCE)
         self.assertNotIn("stage.call('Prospecção'", SOURCE)
