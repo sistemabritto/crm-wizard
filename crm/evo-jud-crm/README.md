@@ -1,6 +1,6 @@
 # evo-jud-crm no britto-wizard (em construção)
 
-Stacks geradas da produção de referência (05/11/2026) e sanitizadas, com imagens fixadas por digest em `images.env`.
+Stacks compartilhadas com o evo-service-crm, geradas da produção de referência (05/11/2026) e sanitizadas, com imagens fixadas por digest em `images.env`.
 Testado em Ubuntu 24.04, Intel Xeon E3 v2 (Ivy Bridge, **sem AVX2**). Por isso o ClickHouse fica na 26.3 LTS: a 26.5+ exige AVX2.
 
 | Stack | Arquivo | Serviços |

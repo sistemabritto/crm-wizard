@@ -2,7 +2,7 @@
 
 # Britto Wizard
 
-Instalador de **CRMs de nicho** com WhatsApp, agentes de IA, funil de tráfego e conector MCP, em uma VPS **Ubuntu 24.04**. Começa pelo **evo-jud-crm** (escritórios de advocacia).
+Instalador de **CRMs de nicho** com WhatsApp, agentes de IA, funil de tráfego e conector MCP, em uma VPS **Ubuntu 24.04**. Oferece modelos para serviços e escritórios de advocacia.
 
 Fork do [SetupOrion](https://github.com/oriondesign2015/SetupOrion) (MIT) da **OrionDesign**: a estrutura, o Traefik + Portainer e o deploy de stacks pela API do Portainer vêm de lá. Os scripts originais (`Setup`, `SetupOrion`, `README-SetupOrion.md`) continuam neste repositório e seguem sincronizados. Créditos à OrionDesign.
 
@@ -18,11 +18,11 @@ O wizard abre com a logo do Sistema Britto, atualiza o servidor e instala as dep
 
    | CRM | Nicho | Situação |
    |---|---|---|
+   | `evo-service-crm` | serviços online e negócios de serviço (padrão) | disponível |
    | `evo-jud-crm` | jurídico | disponível |
    | `evo-clinic-crm` | clínicas | em breve |
    | `evo-store-crm` | lojas | em breve |
    | `evo-delivery-crm` | delivery | em breve |
-   | `evo-service-crm` | serviços online | em breve |
 
 3. **Instalação:**
    - bancos, CRM completo e WhatsApp;
@@ -56,7 +56,7 @@ O workflow [`teste-instalacao`](.github/workflows/teste-instalacao.yml) roda a i
 
 Para rodar: aba **Actions › teste-instalacao › Run workflow**.
 
-## O que vem no evo-jud-crm
+## Componentes compartilhados pelos CRMs
 | Componente | Repositório / imagem |
 |---|---|
 | API do CRM (tracking, automações, pipelines) | [sistemabritto/evo-jud-crm-api](https://github.com/sistemabritto/evo-jud-crm-api) |
@@ -82,11 +82,12 @@ britto                     comando de entrada (curl)
 BrittoWizard               o wizard (TUI)
 lib/                       logo ASCII e helper do Portainer
 infra/                     Traefik + Portainer
-crm/evo-jud-crm/           stacks, imagens, env.example, templates/, processor-patch/
+crm/evo-jud-crm/           stacks e configuração compartilhadas, template jurídico
+crm/evo-service-crm/       template para negócios de serviço
 docs/                      materiais
 skills/site-trackeado/     skill do Claude Code para o site
 ```
-Para um nicho novo, crie `crm/evo-<nicho>-crm/` com o mesmo formato e ative-o na lista `CRMS` do `BrittoWizard`.
+O [template de serviços](crm/evo-service-crm/README.md) cria dois pipelines, etiquetas, campos, macros, opt-out e configuração do funil de tráfego. Os dois nichos usam as mesmas imagens e stacks.
 
 ## Licença
 MIT, igual ao SetupOrion. Mantenha os créditos à OrionDesign e ao Sistema Britto.

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 ## // ## // ## // ## // ## // ## // ## // ## // ## // ## // ## // ## // ## // ## // ##
 ##                              BRITTO WIZARD · Sistema Britto                       ##
-##   Instalador do evo-jud-crm (e próximos CRMs de nicho) em VPS Ubuntu 24.04.       ##
+##   Instalador de CRMs de nicho em VPS Ubuntu 24.04.                                ##
 ##   Fork do SetupOrion (MIT) da OrionDesign: estrutura, Traefik + Portainer e o     ##
 ##   deploy via API do Portainer vêm de lá. Créditos: github.com/oriondesign2015     ##
 ## // ## // ## // ## // ## // ## // ## // ## // ## // ## // ## // ## // ## // ## // ##
@@ -163,7 +163,7 @@ preparar_servidor() {
   info "CPU: $cpu ($(nproc) vCPU)"
   if grep -qw avx2 /proc/cpuinfo; then ok "CPU com AVX2"
   else aviso "CPU sem AVX2 (comum na Database Mart: Xeon E3 v2). Sem problema: o ClickHouse fica fixo na 26.3 LTS, que roda sem AVX2."; fi
-  [ "$ram" -ge 7 ] && ok "RAM: ${ram} GB" || aviso "RAM: ${ram} GB. O evo-jud-crm completo pede 8 GB (mínimo 4 GB com swap)."
+  [ "$ram" -ge 7 ] && ok "RAM: ${ram} GB" || aviso "RAM: ${ram} GB. O CRM completo pede 8 GB (mínimo 4 GB com swap)."
   [ "$disco" -ge 40 ] && ok "Disco livre: ${disco} GB" || aviso "Disco livre: ${disco} GB (recomendado 40 GB+)."
   IP=$(ip_publico); ok "IP público: $IP"
 
@@ -223,11 +223,11 @@ passo_portainer() {
 
 ## ------------------------------------------------------ passo 2: escolha do CRM
 CRMS=(
+  "evo-service-crm|Serviços online e negócios de serviço (padrão)|ativo"
   "evo-jud-crm|Jurídico (escritórios de advocacia)|ativo"
   "evo-clinic-crm|Clínicas e consultórios|em breve"
   "evo-store-crm|Lojas e varejo|em breve"
   "evo-delivery-crm|Delivery e restaurantes|em breve"
-  "evo-service-crm|Serviços online e infoprodutos|em breve"
 )
 
 passo_crm() {
@@ -240,17 +240,21 @@ passo_crm() {
     i=$((i + 1))
   done
   echo; perguntar esc "Escolha" "1"
+  [[ "$esc" =~ ^[1-5]$ ]] || morrer "Escolha inválida."
   c=${CRMS[$((esc - 1))]:-}; IFS='|' read -r id nome st <<<"$c"
-  [ "$st" = ativo ] || morrer "$id ainda não está disponível. Por enquanto: evo-jud-crm."
+  [ "$st" = ativo ] || morrer "$id ainda não está disponível. Disponíveis: evo-service-crm e evo-jud-crm."
   CRM_ID=$id; env_set BRITTO_CRM "$CRM_ID"
-  instalar_evo_jud
+  instalar_crm
 }
 
-instalar_evo_jud() {
+instalar_crm() {
   local D="$WIZ_DIR/crm/evo-jud-crm" dom
-  cabecalho "Passo 2 · evo-jud-crm · dados da instalação"
+  # Stacks, imagens e patch são compartilhados com o jurídico.
+  cabecalho "Passo 2 · $CRM_ID · dados da instalação"
   mesclar_env "$D/env.example"; mesclar_env "$D/images.env"; mesclar_env "$WIZ_DIR/infra/images.env"
-  local org; perguntar org "Nome do escritório" "$(env_get ORG_NAME | sed 's/^Meu Escritório$//')"; env_set ORG_NAME "${org:-Escritório}"
+  local org org_label="Nome do escritório" org_default="Escritório"
+  [ "$CRM_ID" = evo-service-crm ] && { org_label="Nome do negócio"; org_default="Meu negócio"; }
+  perguntar org "$org_label" "$(env_get ORG_NAME | sed 's/^Meu Escritório$//')"; env_set ORG_NAME "${org:-$org_default}"
   dom=$(env_get HOST_PORTAINER | sed 's/^portainer\.//'); [[ "$dom" == *exemplo* ]] && dom=""
   perguntar dom "Domínio base (ex.: seudominio.com.br)" "$dom"
   local k p v
@@ -268,7 +272,7 @@ instalar_evo_jud() {
 
   for k in HOST_CRM HOST_API_CRM HOST_WHATSAPP; do checar_dns "$(env_get "$k")"; done
 
-  cabecalho "Passo 2 · evo-jud-crm · instalando"
+  cabecalho "Passo 2 · $CRM_ID · instalando"
   mkdir -p "$BASE/crm/evo-jud-crm/processor-patch"
   cp "$D/processor-patch/sitecustomize.py" "$BASE/crm/evo-jud-crm/processor-patch/" && ok "patch de áudio do processor"
   local s
@@ -371,13 +375,15 @@ configurar_whatsapp() { # preenche Configurações › Admin › Evolution Go (U
 }
 
 aplicar_template() {
-  local D="$WIZ_DIR/crm/${CRM_ID:-$(env_get BRITTO_CRM)}" t wa ag
+  local crm="${CRM_ID:-$(env_get BRITTO_CRM)}"; crm=${crm:-evo-jud-crm}
+  local D="$WIZ_DIR/crm/$crm" t wa ag padrao=juridico
+  [ "$crm" = evo-service-crm ] && padrao=servicos
   cabecalho "Template de nicho"
   info "O template cria pipelines, etiquetas, campos, macros, a automação de opt-out e o funil de tráfego."
   info "É idempotente: não apaga nem sobrescreve nada que já exista."
   ls "$D/templates/"*.rb >/dev/null 2>&1 || { aviso "sem templates para este CRM"; return; }
   echo; for t in "$D"/templates/*.rb; do echo -e "   ${verde}•${reset} $(basename "$t" .rb)"; done; echo
-  perguntar t "Template (ou 'nenhum')" "juridico"
+  perguntar t "Template (ou 'nenhum')" "$padrao"
   [ "$t" = nenhum ] && return
   [ -f "$D/templates/$t.rb" ] || morrer "template $t não encontrado"
   perguntar wa "WhatsApp comercial com DDI (ex.: 5571999999999; Enter pula)" ""
@@ -387,14 +393,14 @@ aplicar_template() {
 }
 
 fechar_cadastro() {
-  local D="$WIZ_DIR/crm/${CRM_ID:-$(env_get BRITTO_CRM)}"
+  local D="$WIZ_DIR/crm/evo-jud-crm"
   env_set ENABLE_ACCOUNT_SIGNUP false; env_set SIGNUP_ALLOW_RANGE 255.255.255.255/32
   deploy_portainer evocrm "$D/stacks/evocrm.yaml" && ok "cadastro público fechado (só convites a partir de agora)"
 }
 
 ## ------------------------------------------------------------- extras opcionais
 passo_mcp() {
-  local D="$WIZ_DIR/crm/${CRM_ID:-$(env_get BRITTO_CRM)}" host pass hash tok
+  local D="$WIZ_DIR/crm/evo-jud-crm" host pass hash tok
   cabecalho "Extra · Conector MCP (Claude, ChatGPT/Codex)"
   perguntar host "Domínio do conector" "$(env_get HOST_MCP | grep -v exemplo || echo "mcp.$(env_get HOST_CRM | sed 's/^crm\.//')")"
   env_set HOST_MCP "$host"; checar_dns "$host"
@@ -417,7 +423,7 @@ passo_mcp() {
 }
 
 passo_docuseal() {
-  local D="$WIZ_DIR/crm/${CRM_ID:-$(env_get BRITTO_CRM)}" host
+  local D="$WIZ_DIR/crm/evo-jud-crm" host
   cabecalho "Extra · Assinatura eletrônica (DocuSeal)"
   perguntar host "Domínio da assinatura" "$(env_get HOST_DOCUSEAL | grep -v exemplo || echo "assinatura.$(env_get HOST_CRM | sed 's/^crm\.//')")"
   env_set HOST_DOCUSEAL "$host"; checar_dns "$host"
